@@ -1,4 +1,5 @@
 const Hotel = require("../models/Hotel");
+const Room = require("../models/Room");
 
 const createHotel = async (req, res, next) => {
     const newHotel = new Hotel(req.body)
@@ -39,11 +40,14 @@ const getHotel = async (req, res, next) => {
     }
 }
 const allHotel = async (req, res, next) => {
-    // const failed = true;
-    // if(failed) return next(createError(401, "You are not authenticated!"));
+    const { min, max, ...others } = req.query;
 
     try {
-        const allHotels = await Hotel.find(req.query);
+        const allHotels = await Hotel.find({
+            ...others,
+            cheapestPrice: { $gt: min | 1, $lt: max | 999 }
+        }).limit(req.query.limit);
+
         res.status(200).send(allHotels);
     } catch (error) {
         next(error);
@@ -71,15 +75,27 @@ const countByType = async (req, res, next) => {
         const cabinCount = await Hotel.countDocuments({ type: "cabin" })
 
         res.status(200).send([
-            {type: "hotel", count: hotelCount},
-            {type: "apartment", count: apartmentCount},
-            {type: "resort", count: resortCount},
-            {type: "villa", count: villaCount},
-            {type: "cabin", count: cabinCount},
+            { type: "hotel", count: hotelCount },
+            { type: "apartment", count: apartmentCount },
+            { type: "resort", count: resortCount },
+            { type: "villa", count: villaCount },
+            { type: "cabin", count: cabinCount },
         ]);
     } catch (error) {
         next(error);
     }
 }
 
-module.exports = { createHotel, updateHotel, deleteHotel, getHotel, allHotel, countByCity, countByType };
+const getHotelRooms = async (req, res, next) => {
+    try {
+        const hotel = await Hotel.findById(req.params.id);
+        const roomList = await Promise.all(hotel.rooms.map(room=>{
+            return Room.findById(room);
+        }))
+        res.status(200).send(roomList)
+    } catch (error) {
+        next(error);
+    }
+}
+
+module.exports = { createHotel, updateHotel, deleteHotel, getHotel, allHotel, countByCity, countByType, getHotelRooms };
