@@ -45,11 +45,11 @@ app.use((err, req, res, next) => {
 
 // =====================================
 app.get('/', (req, res) => {
-  res.send('acio..');
+  res.send('booking nest..');
 })
 
 
-app.listen(port, () => {
+app.listen(precess.env.PORT || port, () => {
   connect();
   console.log('running..');
 })
